@@ -1,4 +1,4 @@
-import {ListingForm} from "@/components/ui/listing_form";
+import {ListingForm} from "@/components/listing_form";
 export default async function Home() {
   
 

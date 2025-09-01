@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { cn } from "@/lib/utils";
-import { Button } from "./button";
+import { Button } from "./ui/button";
 
 // 1. Define the Zod schema for validation
 const formSchema = z.object({
