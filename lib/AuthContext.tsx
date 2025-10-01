@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null;
   jwt: string | null;
   setUser: (user: User | null) => void;
-  login: (username: string, password: string) => void;
+  login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -47,7 +47,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       setJwt(userData.jwt);
       console.log("userData", userData);
+      return true;
     }
+    return false;
   };
 
   const logout = () => {

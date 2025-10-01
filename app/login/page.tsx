@@ -30,9 +30,13 @@ export default function LoginPage() {
     setIsLoading(true)
     
     try {
-      login(username, password);
-      
-      router.push("/profile")
+      const log = await login(username, password);
+
+      if (log) {
+        router.push("/profile")
+      } else {
+        router.push("/login")
+      }
     } catch (error) {
       console.error("Login failed:", error)
     } finally {

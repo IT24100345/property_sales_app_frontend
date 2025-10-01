@@ -24,7 +24,6 @@ import {
 import { toast } from "sonner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/lib/AuthContext"
-import User from "@/types/user"
 import { updateUser } from "@/lib/authService"
 
 
@@ -122,12 +121,15 @@ export default function ProfilePage() {
         ...editableFields
       } : null)
 
-      setAuthUser(await updateUser({
+
+      const c = await updateUser({
         id: authUser?.id || "",
-        username: user?.username || "",
-        email: user?.email || "",
+        username: editableFields.fullName || "",
+        email: editableFields.email || "",
         roles: authUser?.roles || [],
-      }, jwt ?? ""))
+      })
+
+      console.log("updateUser", c)
 
       toast.info("Your profile information has been updated successfully")
     } catch (error) {
@@ -170,7 +172,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container max-w-4xl py-10 px-20">
+    <div className="container max-w-4xl py-10 px-20 mx-auto">
       <h1 className="mb-6 text-3xl font-bold">My Profile</h1>
       
       <div className="mb-8 flex flex-col items-center sm:flex-row sm:items-start">

@@ -28,19 +28,19 @@ export async function create(
   return data;
 }
 
-export async function updateUser(user: User, jwt: string): Promise<User> {
+export async function updateUser(user: User): Promise<boolean> {
+  console.log("updateUser", user);
   const userReq = await fetch(`${API_URL}/auth/update`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      Authorization: jwt,
+      "Content-Type": "application/json"
     },
     body: JSON.stringify(user),
   });
-  const data = await userReq.json();
+  const data = await userReq.text();
   console.log("userReq", data);
   if (!userReq.ok) {
     console.error("Get current user failed:", data);
   }
-  return data;
+  return data === "true";
 }
