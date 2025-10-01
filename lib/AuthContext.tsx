@@ -45,8 +45,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         username: userData.username,
         roles: userData.roles,
       });
+
       setJwt(userData.jwt);
+      localStorage.setItem("token", userData.jwt);
+      localStorage.setItem("user", JSON.stringify(userData));
       console.log("userData", userData);
+      console.log("Logged in successfully:", jwt);
       return true;
     }
     return false;

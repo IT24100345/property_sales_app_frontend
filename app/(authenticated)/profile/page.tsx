@@ -26,7 +26,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/lib/AuthContext"
 import { updateUser } from "@/lib/authService"
 
-
 interface UserProfile {
   id: string
   username: string
@@ -80,7 +79,7 @@ export default function ProfilePage() {
           role: authUser?.roles[0] || "buyer",
           phoneNumber: "+94 (077) 123-4567",
           location: "Colombo, Sri Lanka",
-          joinedDate: "January 2023",
+          joinedDate: new Date().toLocaleDateString("en-us")
         }
         
         setUser(mockUser)
@@ -100,7 +99,7 @@ export default function ProfilePage() {
     }
     
     fetchUserProfile()
-  }, [toast, authUser])
+  }, [authUser])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -185,10 +184,19 @@ export default function ProfilePage() {
           <h2 className="text-2xl font-semibold">{user.fullName}</h2>
           <p className="text-muted-foreground">{user.username}</p>
           <div className="mt-2 flex flex-wrap justify-center gap-2 sm:justify-start">
-            <div className="flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
+            {/* <div className="flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
               <BadgeCheck className="mr-1 h-3.5 w-3.5" />
               {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-            </div>
+            </div> */}
+            {authUser?.roles.map((role) => (
+              <div 
+                key={role}
+                className="flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs text-primary"
+              >
+                <BadgeCheck className="mr-1 h-3.5 w-3.5" />
+                {role.charAt(0).toUpperCase() + role.slice(1)}
+              </div>
+            ))}
             <div className="rounded-full bg-muted px-3 py-1 text-xs">
               Member since {user.joinedDate}
             </div>
