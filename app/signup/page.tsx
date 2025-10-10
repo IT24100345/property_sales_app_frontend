@@ -29,8 +29,7 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { sign } from "crypto";
-import { create } from "@/lib/authService";
+import { create } from "@/lib/auth/authService";
 
 const roles = [
   { label: "Admin", value: "ROLE_ADMIN" },

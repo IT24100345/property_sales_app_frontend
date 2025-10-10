@@ -23,8 +23,8 @@ import {
 } from "@/components/ui/avatar"
 import { toast } from "sonner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useAuth } from "@/lib/AuthContext"
-import { updateUser } from "@/lib/authService"
+import { useAuth } from "@/lib/auth/AuthContext"
+import { updateUser } from "@/lib/auth/authService"
 
 interface UserProfile {
   id: string

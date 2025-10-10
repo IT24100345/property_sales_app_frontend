@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useAuth } from "@/lib/AuthContext"
+import { useAuth } from "@/lib/auth/AuthContext"
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
