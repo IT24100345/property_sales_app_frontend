@@ -50,8 +50,8 @@ export async function getCurrentUser(jwt: string): Promise<User> {
   console.log("getCurrentUser with jwt:", jwt);
 
   const data = await (
-    await fetch("/api/auth", {
-      method: "GET",
+    await fetch(`${API_URL}/auth/me`, {
+      method: "POST",
       headers: {
         Authorization: jwt,
       },
@@ -74,7 +74,7 @@ export async function loginRequest(
 ): Promise<LoginResponse> {
   
   const loginResponse: LoginResponse = await (
-    await fetch("/api/auth/login", {
+    await fetch(`${API_URL}/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

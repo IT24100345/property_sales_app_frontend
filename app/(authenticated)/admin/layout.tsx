@@ -36,7 +36,7 @@ export default function AdminLayout({
 
       // If no user is logged in, redirect to login
       if (!user) {
-        router.push("/login")
+        //router.push("/login")
         return
       }
 
@@ -120,92 +120,92 @@ export default function AdminLayout({
 
   // Render children if authorized with admin header
   return (
-    <div className="min-h-screen">
-      {/* Admin Header */}
-      <div className="border-b bg-slate-900 text-white">
-        <div className="container py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2">
-                <Shield className="h-5 w-5 text-blue-400" />
-                <span className="font-semibold">Admin Panel</span>
-              </div>
-              <div className="h-4 w-px bg-slate-600"></div>
-              <div className="flex items-center space-x-2">
-                <div className="h-2 w-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-sm text-slate-300">{userRole} Access</span>
-              </div>
-            </div>
+    // <div className="min-h-screen">
+    //   {/* Admin Header */}
+    //   <div className="border-b bg-slate-900 text-white">
+    //     <div className="container py-3">
+    //       <div className="flex items-center justify-between">
+    //         <div className="flex items-center space-x-3">
+    //           <div className="flex items-center space-x-2">
+    //             <Shield className="h-5 w-5 text-blue-400" />
+    //             <span className="font-semibold">Admin Panel</span>
+    //           </div>
+    //           <div className="h-4 w-px bg-slate-600"></div>
+    //           <div className="flex items-center space-x-2">
+    //             <div className="h-2 w-2 bg-green-400 rounded-full animate-pulse"></div>
+    //             <span className="text-sm text-slate-300">{userRole} Access</span>
+    //           </div>
+    //         </div>
             
-            <div className="flex items-center space-x-4">
-              <div className="text-sm text-slate-300">
-                Welcome, {user?.username}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push("/")}
-                className="border-slate-600 text-slate-300 hover:bg-slate-800"
-              >
-                Exit Admin
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+    //         <div className="flex items-center space-x-4">
+    //           <div className="text-sm text-slate-300">
+    //             Welcome, {user?.username}
+    //           </div>
+    //           <Button
+    //             variant="outline"
+    //             size="sm"
+    //             onClick={() => router.push("/")}
+    //             className="border-slate-600 text-slate-300 hover:bg-slate-800"
+    //           >
+    //             Exit Admin
+    //           </Button>
+    //         </div>
+    //       </div>
+    //     </div>
+    //   </div>
 
-      {/* Admin Navigation */}
-      <div className="border-b bg-muted/30">
-        <div className="container py-2">
-          <nav className="flex space-x-6">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => router.push("/admin")}
-              className="text-sm"
-            >
-              Dashboard
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => router.push("/admin/users")}
-              className="text-sm"
-            >
-              Users
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => router.push("/admin/properties")}
-              className="text-sm"
-            >
-              Properties
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => router.push("/admin/reports")}
-              className="text-sm"
-            >
-              Reports
-            </Button>
-            {userRole === "Admin" && (
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => router.push("/admin/settings")}
-                className="text-sm"
-              >
-                Settings
-              </Button>
-            )}
-          </nav>
-        </div>
-      </div>
-      
+    //   {/* Admin Navigation */}
+    //   <div className="border-b bg-muted/30">
+    //     <div className="container py-2">
+    //       <nav className="flex space-x-6">
+    //         <Button 
+    //           variant="ghost" 
+    //           size="sm"
+    //           onClick={() => router.push("/admin")}
+    //           className="text-sm"
+    //         >
+    //           Dashboard
+    //         </Button>
+    //         <Button 
+    //           variant="ghost" 
+    //           size="sm"
+    //           onClick={() => router.push("/admin/users")}
+    //           className="text-sm"
+    //         >
+    //           Users
+    //         </Button>
+    //         <Button 
+    //           variant="ghost" 
+    //           size="sm"
+    //           onClick={() => router.push("/admin/properties")}
+    //           className="text-sm"
+    //         >
+    //           Properties
+    //         </Button>
+    //         <Button 
+    //           variant="ghost" 
+    //           size="sm"
+    //           onClick={() => router.push("/admin/reports")}
+    //           className="text-sm"
+    //         >
+    //           Reports
+    //         </Button>
+    //         {userRole === "Admin" && (
+    //           <Button 
+    //             variant="ghost" 
+    //             size="sm"
+    //             onClick={() => router.push("/admin/settings")}
+    //             className="text-sm"
+    //           >
+    //             Settings
+    //           </Button>
+    //         )}
+    //       </nav>
+    //     </div>
+    //   </div>
+      <div>
       {/* Main Content */}
-      <main className="container py-6">
+      <main className="container mx-auto">
         {children}
       </main>
     </div>

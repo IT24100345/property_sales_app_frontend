@@ -1,18 +1,21 @@
-import { getServerUser } from "@/lib/auth/server";
+"use client";
 import { Suspense } from "react";
 import Loading from "./loading";
-import { redirect } from "next/navigation";
 
-export default async function SellerLayout({
+import { useAuth } from "@/lib/auth/AuthContext";
+
+export default function SellerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
 
-  const user = await getServerUser();
+  const { user } = useAuth();
 
+  console.log("SellerLayout user:", user);
   if (!user?.roles.includes("ROLE_SELLER")) {
-    redirect("/login?msg=Insufficient%20permissions&callbackUrl=/seller");
+    console.log(user?.roles);
+    //redirect("/login?msg=Insufficient%20permissions&callbackUrl=/seller");
   }
 
   return <Suspense fallback={<Loading />}>{children}</Suspense>;

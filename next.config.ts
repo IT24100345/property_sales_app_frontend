@@ -7,10 +7,10 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [{
-      protocol: 'https',
-      hostname: 'res.cloudinary.com',
-      port: '',
-      pathname: '/doggnkzdk/**',
+      protocol: 'http',
+      hostname: 'localhost',
+      port: '8080',
+      pathname: "/api/images/**"
     }]
   }
 };

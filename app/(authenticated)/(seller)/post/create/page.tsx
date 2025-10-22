@@ -11,7 +11,8 @@ import {
   FileText, 
   Camera,
   Upload,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from "lucide-react"
 import Image from "next/image"
 
@@ -41,7 +42,9 @@ import {
   AlertTitle,
 } from "@/components/ui/alert"
 import { toast } from "sonner"
-import { sub } from "date-fns"
+import { Progress } from "@/components/ui/progress"
+import { useAuth } from "@/lib/auth/AuthContext"
+// import { property } from "zod"
 
 interface PropertyForm {
   title: string
@@ -49,11 +52,31 @@ interface PropertyForm {
   price: string
   location: string
   landSize: string
-  type: "residential" | "commercial" | "agricultural" | ""
+  type: "RESIDENTIAL" | "COMMERCIAL" | "AGRICULTURAL" | ""
   features: string[]
   contactPhone: string
   contactEmail: string
   images: File[]
+}
+
+interface ImageUploadResponse {
+  fileName: string
+  fileUrl: string
+  fileSize: number
+  uploadedAt: string
+}
+
+interface PropertySubmissionData {
+  title: string
+  description: string
+  price: number
+  location: string
+  landArea: number
+  type: string
+  features: string[]
+  contactPhone: string
+  contactEmail: string
+  images: string[]
 }
 
 const propertyFeatures = [
@@ -73,9 +96,17 @@ const propertyFeatures = [
   "Subdivision potential"
 ]
 
+// Spring Boot API endpoint
+const SPRING_API_URL = "http://localhost:8080/api"
+
 export default function CreatePostPage() {
   const router = useRouter()
+
+  const { jwt, user } = useAuth()
+
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadingImages, setUploadingImages] = useState(false)
   const [formData, setFormData] = useState<PropertyForm>({
     title: "",
     description: "",
@@ -108,15 +139,32 @@ export default function CreatePostPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (files.length + formData.images.length > 8) {
-      toast.error("Too many images",{
+      toast.error("Too many images", {
         description: "You can upload a maximum of 8 images",
       })
       return
     }
 
+    // Validate file types and sizes
+    const validFiles = files.filter(file => {
+      if (!file.type.startsWith('image/')) {
+        toast.error("Invalid file type", {
+          description: `${file.name} is not an image file`,
+        })
+        return false
+      }
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        toast.error("File too large", {
+          description: `${file.name} exceeds 10MB limit`,
+        })
+        return false
+      }
+      return true
+    })
+
     setFormData(prev => ({
       ...prev,
-      images: [...prev.images, ...files]
+      images: [...prev.images, ...validFiles]
     }))
   }
 
@@ -127,20 +175,119 @@ export default function CreatePostPage() {
     }))
   }
 
+  const uploadImageToServer = async (file: File): Promise<ImageUploadResponse> => {
+    const formData = new FormData()
+    formData.append('image', file)
+    
+    try {
+      const response = await fetch(`${SPRING_API_URL}/images/upload`, {
+        method: 'POST',
+        body: formData,
+        // Add authorization header if needed
+        headers: {
+          'Authorization': jwt ?? ""
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null)
+        throw new Error(errorData?.message || `Upload failed: ${response.statusText}`)
+      }
+
+      const data: ImageUploadResponse = await response.json()
+      return data
+    } catch (error) {
+      console.error('Image upload error:', error)
+      throw new Error(`Failed to upload ${file.name}`)
+    }
+  }
+
+  const uploadAllImages = async (images: File[]): Promise<string[]> => {
+    setUploadingImages(true)
+    setUploadProgress(0)
+
+    const uploadedFileNames: string[] = []
+    const totalImages = images.length
+
+    try {
+      for (let i = 0; i < images.length; i++) {
+        const file = images[i]
+        toast.info(`Uploading image ${i + 1} of ${totalImages}`, {
+          description: file.name,
+          duration: 2000,
+        })
+
+        const uploadResponse = await uploadImageToServer(file)
+        uploadedFileNames.push(uploadResponse.fileName)
+
+        // Update progress
+        const progress = ((i + 1) / totalImages) * 100
+        setUploadProgress(progress)
+      }
+
+      return uploadedFileNames
+    } catch (error) {
+      console.error('Image upload failed:', error)
+      throw error
+    } finally {
+      setUploadingImages(false)
+      setUploadProgress(0)
+    }
+  }
+
+  const submitPropertyToServer = async (propertyData: PropertySubmissionData) => {
+    try {
+      const response = await fetch(`${SPRING_API_URL}/posts/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': jwt ?? ""
+        },
+        body: JSON.stringify(propertyData),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null)
+        throw new Error(errorData?.message || `Server error: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      return result
+    } catch (error) {
+      console.error('Property submission error:', error)
+      throw error
+    }
+  }
+
   const validateForm = () => {
     const required = ['title', 'description', 'price', 'location', 'landSize', 'type', 'contactPhone']
     const missing = required.filter(field => !formData[field as keyof PropertyForm])
     
     if (missing.length > 0) {
-      toast.error("Missing required fields",{
+      toast.error("Missing required fields", {
         description: `Please fill in: ${missing.join(', ')}`,
       })
       return false
     }
 
     if (formData.images.length === 0) {
-      toast.error( "Images required", {
+      toast.error("Images required", {
         description: "Please upload at least one image of your property"
+      })
+      return false
+    }
+
+    // Validate price and land size are numbers
+    if (isNaN(Number(formData.price)) || Number(formData.price) <= 0) {
+      toast.error("Invalid price", {
+        description: "Please enter a valid price"
+      })
+      return false
+    }
+
+    if (isNaN(Number(formData.landSize)) || Number(formData.landSize) <= 0) {
+      toast.error("Invalid land size", {
+        description: "Please enter a valid land size"
       })
       return false
     }
@@ -156,34 +303,45 @@ export default function CreatePostPage() {
     setIsSubmitting(true)
 
     try {
-      // Create FormData for file upload
-      const submitData = new FormData()
-      
-      // Add form fields
-      Object.entries(formData).forEach(([key, value]) => {
-        if (key === 'images') {
-          value.forEach((file: File) => {
-            submitData.append('images', file)
-          })
-        } else if (key === 'features') {
-          submitData.append('features', JSON.stringify(value))
-        } else {
-          submitData.append(key, value as string)
-        }
+      // Step 1: Upload images to Spring server
+      toast.info("Uploading images...", {
+        description: "Please wait while we upload your property images",
       })
 
-      // Simulate API call
-      console.log("Submitting property listing:", submitData)
+      const imageFileNames = await uploadAllImages(formData.images)
+
+      // Step 2: Prepare property data with image file names
+      const propertyData: PropertySubmissionData = {
+        title: formData.title,
+        description: formData.description,
+        price: Number(formData.price),
+        location: formData.location,
+        landArea: Number(formData.landSize),
+        type: formData.type,
+        features: formData.features,
+        contactPhone: formData.contactPhone,
+        contactEmail: formData.contactEmail,
+        images: imageFileNames,
+      }
+
+      // Step 3: Submit property data to Spring server
+      toast.info("Creating property listing...", {
+        description: "Submitting your property details to the server",
+      })
+
+      const result = await submitPropertyToServer(propertyData)
 
       toast.success("Property listed successfully!", {
-        description: "Your property advertisement has been created and is now live.",
+        description: result,
       })
 
-      router.push("/seller/properties") // Redirect to seller's property list
+      // Redirect to seller's property list
+      router.push("/post")
     } catch (error) {
       console.error("Failed to create property listing:", error)
+
       toast.error("Error creating listing", {
-        description: "Please try again later or contact support.",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
       })
     } finally {
       setIsSubmitting(false)
@@ -198,6 +356,24 @@ export default function CreatePostPage() {
           List your property for sale and reach potential buyers
         </p>
       </div>
+
+      {/* Upload Progress */}
+      {uploadingImages && (
+        <Card className="mb-6 border-blue-200 bg-blue-50">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3 mb-2">
+              <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+              <span className="text-sm font-medium text-blue-900">
+                Uploading images to server...
+              </span>
+            </div>
+            <Progress value={uploadProgress} className="h-2" />
+            <p className="text-xs text-blue-700 mt-1">
+              {Math.round(uploadProgress)}% complete
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Basic Information */}
@@ -220,7 +396,11 @@ export default function CreatePostPage() {
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
                 className="mt-1"
+                maxLength={100}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                {formData.title.length}/100 characters
+              </p>
             </div>
 
             <div>
@@ -231,6 +411,7 @@ export default function CreatePostPage() {
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 className="mt-1 min-h-[120px]"
+                maxLength={1000}
               />
               <p className="text-sm text-muted-foreground mt-1">
                 {formData.description.length}/1000 characters
@@ -245,9 +426,9 @@ export default function CreatePostPage() {
                     <SelectValue placeholder="Select property type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="residential">Residential</SelectItem>
-                    <SelectItem value="commercial">Commercial</SelectItem>
-                    <SelectItem value="agricultural">Agricultural</SelectItem>
+                    <SelectItem value="RESIDENTIAL">Residential</SelectItem>
+                    <SelectItem value="COMMERCIAL">Commercial</SelectItem>
+                    <SelectItem value="AGRICULTURAL">Agricultural</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -258,6 +439,7 @@ export default function CreatePostPage() {
                   id="landSize"
                   type="number"
                   step="0.1"
+                  min="0.1"
                   placeholder="e.g., 2.5"
                   value={formData.landSize}
                   onChange={(e) => handleInputChange('landSize', e.target.value)}
@@ -298,6 +480,7 @@ export default function CreatePostPage() {
                 <Input
                   id="price"
                   type="number"
+                  min="1"
                   placeholder="500000"
                   value={formData.price}
                   onChange={(e) => handleInputChange('price', e.target.value)}
@@ -358,7 +541,7 @@ export default function CreatePostPage() {
               Property Images *
             </CardTitle>
             <CardDescription>
-              Upload high-quality images of your property (Maximum 8 images)
+              Upload high-quality images of your property (Maximum 8 images, 10MB each)
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -368,6 +551,8 @@ export default function CreatePostPage() {
                   <div className="aspect-square rounded-lg overflow-hidden bg-muted">
                     <Image
                       src={URL.createObjectURL(file)}
+                      width={500}
+                      height={500}
                       alt={`Property image ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
@@ -378,22 +563,34 @@ export default function CreatePostPage() {
                     size="icon"
                     className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => removeImage(index)}
+                    disabled={uploadingImages}
                   >
                     <X className="h-3 w-3" />
                   </Button>
+                  <div className="absolute bottom-2 left-2 right-2">
+                    <p className="text-xs bg-black/50 text-white px-2 py-1 rounded truncate">
+                      {file.name}
+                    </p>
+                  </div>
                 </div>
               ))}
               
               {formData.images.length < 8 && (
-                <label className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors cursor-pointer flex flex-col items-center justify-center">
+                <label className={`aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors cursor-pointer flex flex-col items-center justify-center ${uploadingImages ? 'opacity-50 cursor-not-allowed' : ''}`}>
                   <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                  <span className="text-sm text-muted-foreground">Add Image</span>
+                  <span className="text-sm text-muted-foreground text-center px-2">
+                    Add Image
+                  </span>
+                  <span className="text-xs text-muted-foreground mt-1">
+                    Max 10MB
+                  </span>
                   <input
                     type="file"
                     multiple
                     accept="image/*"
                     onChange={handleImageUpload}
                     className="hidden"
+                    disabled={uploadingImages}
                   />
                 </label>
               )}
@@ -404,7 +601,7 @@ export default function CreatePostPage() {
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Images Required</AlertTitle>
                 <AlertDescription>
-                  Please upload at least one image to showcase your property.
+                  Please upload at least one image to showcase your property. High-quality images help attract more buyers.
                 </AlertDescription>
               </Alert>
             )}
@@ -454,18 +651,19 @@ export default function CreatePostPage() {
             variant="outline"
             onClick={() => router.back()}
             className="sm:w-auto w-full"
+            disabled={isSubmitting}
           >
             Cancel
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || uploadingImages}
             className="sm:w-auto w-full"
           >
             {isSubmitting ? (
               <>
-                <Upload className="mr-2 h-4 w-4 animate-spin" />
-                Creating Listing...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {uploadingImages ? 'Uploading Images...' : 'Creating Listing...'}
               </>
             ) : (
               <>

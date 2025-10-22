@@ -35,15 +35,14 @@ export default function AdminOnlyLayout({
 
       // If no user is logged in, redirect to login
       if (!user) {
-        router.push("/login")
+        //router.push("/login")
         return
       }
 
       // Check if user has ROLE_ADMIN only (no moderators allowed)
-      const hasAdminRole = user.roles?.includes("ROLE_ADMIN") || 
-                          user.roles?.includes("ADMIN") ||
-                          user.roles?.includes("admin")
+      const hasAdminRole = user.roles?.includes("ROLE_ADMIN")
 
+                          console.log("User roles:", user.roles)
       if (!hasAdminRole) {
         setIsAuthorized(false)
         setIsChecking(false)
@@ -108,13 +107,13 @@ export default function AdminOnlyLayout({
 
   // Render children if authorized with admin-only header
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen w-full">
       {/* Admin-Only Header */}
       <div className="border-b bg-gradient-to-r from-red-900 to-red-800 text-white">
         <div className="container py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center px-4 space-x-2">
                 <Crown className="h-5 w-5 text-yellow-400" />
                 <span className="font-semibold">Administrator Dashboard</span>
               </div>

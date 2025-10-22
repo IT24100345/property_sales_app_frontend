@@ -5,6 +5,6 @@ export async function GET(request: Request) {
     id: 1,
     username: "testuser",
     email: "testuser@example.com",
-    roles: ["ROLE_USER", "ROLE_ADMIN"],
+    roles: ["ROLE_USER", "ROLE_ADMIN", "ROLE_SELLER"],
   });
 }
