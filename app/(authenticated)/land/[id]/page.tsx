@@ -49,6 +49,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 interface Property {
   id: string;
@@ -110,6 +111,9 @@ interface Property {
 // }
 
 export default function PropertyDetailsPage() {
+
+  const { jwt } = useAuth();
+
   const params = useParams();
   const router = useRouter();
   const [property, setProperty] = useState<Property | null>(null);
@@ -136,12 +140,6 @@ export default function PropertyDetailsPage() {
 
         const data = await res.json();
 
-        data.seller.name = "Seller Name";
-        data.seller.email = "seller@example.com";
-        data.seller.phone = "+94 77 123 4567";
-        data.seller.joinedDate = "2022-05-15";
-        data.seller.totalListings = 8;
-
         setProperty(data);
 
       } catch (error) {
@@ -160,8 +158,22 @@ export default function PropertyDetailsPage() {
     fetchProperty();
   }, [params.id]);
 
-  const handleFavoriteToggle = () => {
+  const handleFavoriteToggle = async () => {
     setIsFavorited(!isFavorited);
+
+    const res = await fetch(`http://localhost:8080/api/posts/favourite/${params.id}`, {
+      method: "POST",
+      headers: {
+        "Authorization": jwt ?? ""
+      }
+    });
+    if (!res.ok) {
+      toast.error("Error", {
+        description: "Failed to update favorites",
+      });
+      setIsFavorited(isFavorited);
+    }
+
     toast.message(
       isFavorited ? "Removed from favorites" : "Added to favorites",
       {
@@ -275,12 +287,12 @@ export default function PropertyDetailsPage() {
                           </span>
                         </div>
                         {/* Uncomment when you have actual images */}
-                        {/* <Image
-                          src={image}
+                        <Image
+                          src={`http://localhost:8080/api/images/view/${image}`}
                           alt={`${property.title} - Image ${index + 1}`}
                           fill
                           className="object-cover rounded-lg"
-                        /> */}
+                        />
                       </div>
                     </CarouselItem>
                   ))}
@@ -366,11 +378,11 @@ export default function PropertyDetailsPage() {
               <div className="flex items-center space-x-4">
                 <Avatar className="h-16 w-16">
                   <AvatarImage
-                    src={property.seller.avatar}
-                    alt={property.seller.name}
+                    src={"https://ui-avatars.com/api/?name=John+Doe"}
+                    alt={"Seller"}
                   />
                   <AvatarFallback>
-                    {property.seller.name
+                    {"seller"
                       .split(" ")
                       .map((n) => n[0])
                       .join("")}
@@ -378,14 +390,14 @@ export default function PropertyDetailsPage() {
                 </Avatar>
                 <div>
                   <h3 className="font-semibold text-lg">
-                    {property.seller.name}
+                    {"Seller"}
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     Member since{" "}
-                    {new Date(property.seller.joinedDate).getFullYear()}
+                    {new Date(property.createdAt).getFullYear()}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {property.seller.totalListings} properties listed
+                    {10} properties listed
                   </p>
                 </div>
               </div>
@@ -395,11 +407,11 @@ export default function PropertyDetailsPage() {
               <div className="space-y-3">
                 <div className="flex items-center">
                   <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm">{property.seller.phone}</span>
+                  <span className="text-sm">{"07777777"}</span>
                 </div>
                 <div className="flex items-center">
                   <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm">{property.seller.email}</span>
+                  <span className="text-sm">{"seller@example.com"}</span>
                 </div>
               </div>
 

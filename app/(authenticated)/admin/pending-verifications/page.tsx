@@ -387,7 +387,7 @@ export default function PendingVerificationsPage() {
                     <span className="text-sm">{formatDate(property.submittedAt)}</span>
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 mx-auto">
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button 

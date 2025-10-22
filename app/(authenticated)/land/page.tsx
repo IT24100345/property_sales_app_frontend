@@ -32,6 +32,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import Link from "next/link"
 /*
 "id": 1,
     "landArea": 89,
@@ -140,7 +141,7 @@ export default function LandPage() {
   const [locationFilter, setLocationFilter] = useState("")
   const [typeFilter, setTypeFilter] = useState("")
   const [priceRange, setPriceRange] = useState([0, 1000000])
-  const [landSizeRange, setLandSizeRange] = useState([0, 15])
+  const [landSizeRange, setLandSizeRange] = useState([0, 1000000])
 
   const locations = [...new Set(properties?.map(p => p.location))]
   const propertyTypes = [...new Set(properties?.map(p => p.type))]
@@ -174,22 +175,26 @@ export default function LandPage() {
     // Location filter
     if (locationFilter && locationFilter !== "all") {
       filtered = filtered?.filter(property => property.location === locationFilter)
+      // console.log("Filtered by location:", filtered)
     }
 
     // Type filter
     if (typeFilter && typeFilter !== "all") {
       filtered = filtered?.filter(property => property.type === typeFilter)
+      // console.log("Filtered by type:", filtered)
     }
 
     // Price range filter
     filtered = filtered?.filter(property => 
       property.price >= priceRange[0] && property.price <= priceRange[1]
     )
+    // console.log("Filtered by price:", filtered)
 
     // Land size filter
     filtered = filtered?.filter(property => 
       property.landArea >= landSizeRange[0] && property.landArea <= landSizeRange[1]
     )
+    // console.log("Filtered by land size:", filtered)
 
     setFilteredProperties(filtered)
   }, [searchTerm, locationFilter, typeFilter, priceRange, landSizeRange, properties])
@@ -231,7 +236,7 @@ export default function LandPage() {
     setLocationFilter("")
     setTypeFilter("")
     setPriceRange([0, 1000000])
-    setLandSizeRange([0, 15])
+    setLandSizeRange([0, 1000000])
   }
 
   const hasActiveFilters = searchTerm || locationFilter || typeFilter || 
@@ -385,7 +390,7 @@ export default function LandPage() {
               </div>
               {/* Uncomment when you have actual images */}
               <Image
-                src={`http://localhost:8080/api/images/view${property.images[0]}`}
+                src={`http://localhost:8080/api/images/view/${property.images[0]}`}
                 alt={property.title}
                 fill
                 className="object-cover"
@@ -430,9 +435,11 @@ export default function LandPage() {
               <Button variant="outline" size="sm" className="flex-1">
                 Contact Seller
               </Button>
+              <Link href={`/land/${property.id}`}>
               <Button size="sm" className="flex-1">
                 View Details
               </Button>
+              </Link>
             </CardFooter>
           </Card>
         ))}
@@ -656,7 +663,7 @@ function MobileFilterControls({
         <Slider
           value={landSizeRange}
           onValueChange={setLandSizeRange}
-          max={15}
+          max={1000000}
           min={0}
           step={0.1}
         />

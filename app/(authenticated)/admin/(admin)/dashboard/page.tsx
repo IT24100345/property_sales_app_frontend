@@ -26,6 +26,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useAuth } from "@/lib/auth/AuthContext"
+import { toast } from "sonner"
 
 // Mock data types
 interface DashboardStats {
@@ -106,50 +108,52 @@ const mockRecentActivity: RecentActivity[] = [
   }
 ]
 
-const mockPendingApprovals: PendingApproval[] = [
-  {
-    id: "1",
-    type: "property",
-    title: "Luxury Hillside Property - Kandy",
-    submittedBy: "Michael Chen",
-    submittedAt: "2024-01-15",
-    priority: "high"
-  },
-  {
-    id: "2",
-    type: "user_verification",
-    title: "Business License Verification",
-    submittedBy: "Lanka Properties Ltd",
-    submittedAt: "2024-01-14",
-    priority: "medium"
-  },
-  {
-    id: "3",
-    type: "property",
-    title: "Agricultural Land - Matale",
-    submittedBy: "Rajesh Kumar",
-    submittedAt: "2024-01-13",
-    priority: "low"
-  }
-]
+
 
 export default function AdminDashboard() {
+
+  const { jwt } = useAuth();
+  
   const [stats, setStats] = useState<DashboardStats>(mockStats)
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>(mockRecentActivity)
-  const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>(mockPendingApprovals)
+  const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>()
   const [loading, setLoading] = useState(false)
+
+  const handleApprove = async (id: string) => {
+    setLoading(true)
+    const response = await fetch(`http://localhost:8080/api/admin/pending-posts/${id}/approve`, {
+      method: 'POST',
+      headers: {
+        'Authorization': jwt ?? ""
+      }
+    })
+    if (response.ok) {
+
+      setPendingApprovals((prev) => prev?.filter((item) => item.id !== id))
+      toast.success("Post approved successfully")
+
+    } else {
+      toast.error("Failed to approve post")
+    }
+    setLoading(false)
+  }
 
   useEffect(() => {
     const fetchPendingApprovals = async () => {
       setLoading(true)
-      const response = await fetch('http://localhost:8080/api/admin/pending-approvals')
+      const response = await fetch('http://localhost:8080/api/admin/pending-posts' , {
+        method: 'GET',
+        headers: {
+          'Authorization': jwt ?? ""
+        }
+      })
       const data = await response.json()
       setPendingApprovals(data)
       setLoading(false)
     }
 
     fetchPendingApprovals()
-  }, [])
+  }, [jwt])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -277,8 +281,8 @@ export default function AdminDashboard() {
           <CardContent>
             <div className="text-3xl font-bold text-orange-600">{stats.pendingApprovals}</div>
             <p className="text-sm text-muted-foreground mt-1">Require immediate attention</p>
-            <Button variant="outline" size="sm" className="mt-3">
-              Review All
+            <Button variant="outline" size="sm" className="mt-3" >
+              Approve
             </Button>
           </CardContent>
         </Card>
@@ -374,7 +378,7 @@ export default function AdminDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pendingApprovals.map((approval) => (
+                {pendingApprovals?.map((approval) => (
                   <TableRow key={approval.id}>
                     <TableCell>
                       <div>
@@ -393,7 +397,7 @@ export default function AdminDashboard() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">Review</Button>
+                        <Button size="sm" variant="outline" onClick={() => handleApprove(approval.id)}>Approve</Button>
                       </div>
                     </TableCell>
                   </TableRow>

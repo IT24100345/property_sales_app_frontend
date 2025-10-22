@@ -25,6 +25,7 @@ import { toast } from "sonner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/lib/auth/AuthContext"
 import { updateUser } from "@/lib/auth/authService"
+import Link from "next/link"
 
 interface UserProfile {
   id: string
@@ -39,11 +40,18 @@ interface UserProfile {
   joinedDate: string
 }
 
+interface SavedPost {
+  postId: number
+  is: number
+}
+
 export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [activeTab, setActiveTab] = useState("details")
+
+  const [saved, setSaved] = useState<SavedPost[]>([])
   
   // Edit fields state
   const [editableFields, setEditableFields] = useState({
@@ -62,11 +70,6 @@ export default function ProfilePage() {
     const fetchUserProfile = async () => {
       setIsLoading(true)
       try {
-        // This would be replaced with an actual API call
-        // const response = await fetch(`/api/users/profile`)
-        // const data = await response.json()
-        
-        // For now, simulate API response with mock data
 
         console.log("authUser", authUser)
         
@@ -97,9 +100,29 @@ export default function ProfilePage() {
         setIsLoading(false)
       }
     }
+
+    const fetchSaved = async () => {
+      const res = await fetch("http://localhost:8080/api/auth/saved-posts", {
+        method: "GET",
+        headers: {
+          "Authorization": jwt ?? ""
+        }
+      });
+
+      if (!res.ok) {
+        toast.error("Error", {
+          description: "Failed to fetch saved posts",
+        });
+        return;
+      }
+
+      const data = await res.json();
+      setSaved(data);
+    }
     
     fetchUserProfile()
-  }, [authUser])
+    fetchSaved()
+  }, [authUser, jwt])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -345,6 +368,23 @@ export default function ProfilePage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <div>
+        <h3 className="mb-3 font-medium">Saved Posts</h3>
+        {saved.length > 0 ? (
+          <ul className="space-y-2">
+            {saved.map((post) => (
+              <li key={post.postId} className="border-b border-muted-foreground py-2">
+                <Link href={`/land/${post.postId}`} className="font-medium">
+                  {post.postId}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-muted-foreground">No saved posts found.</p>
+        )}
+      </div>
     </div>
   )
 }

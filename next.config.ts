@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
       hostname: 'localhost',
       port: '8080',
       pathname: "/api/images/**"
+    },
+    {
+      protocol: 'https',
+      hostname: 'ui-avatars.com',
+      pathname: "/api/**"
     }]
   }
 };
